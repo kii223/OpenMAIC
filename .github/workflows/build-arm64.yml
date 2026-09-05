@@ -1,11 +1,13 @@
 # 在 GitHub 公共仓库的免费 ARM64 原生 runner 上构建生产部署包。
 # 用法: Actions 页运行 "Build ARM64 standalone"
 #       → 从 Artifacts 下载 openmaic-standalone-arm64.tar.gz
-#       → 在板子上解压后: HOSTNAME=0.0.0.0 PORT=3000 node server.js
 name: Build ARM64 standalone
 
 on:
   workflow_dispatch:
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: 0
 
 jobs:
   build:
@@ -17,8 +19,12 @@ jobs:
         with:
           node-version: 22.19.0
 
-      # 不指定 version, 自动读取 package.json 的 packageManager 字段 (pnpm@10.28.0)
-      - uses: pnpm/action-setup@v4
+      # 与项目 Dockerfile 相同的方式安装 pnpm(匹配 package.json 锁定的 10.28.0)
+      - name: Enable pnpm via corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.0 --activate
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
