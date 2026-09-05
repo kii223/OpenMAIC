@@ -7,20 +7,22 @@ jobs:
   build:
     runs-on: ubuntu-24.04-arm
     steps:
-      - name: 确认运行的是v3版工作流
-        run: echo "workflow v3 - npm install pnpm"
+      - name: 确认v4版工作流(pnpm在setup-node之前)
+        run: echo "workflow v4 - action-setup before setup-node"
 
       - uses: actions/checkout@v5
+
+      # 关键: 必须在 setup-node 之前安装 pnpm, 且不写 version(避免与 package.json 冲突)
+      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v5
         with:
           node-version: 22.19.0
 
-      - name: 用npm安装pnpm 10.28.0
+      - name: 验证版本
         run: |
-          npm install -g pnpm@10.28.0
-          which pnpm
           pnpm --version
+          node --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
