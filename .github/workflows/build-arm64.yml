@@ -1,0 +1,41 @@
+# 在 GitHub 公共仓库的免费 ARM64 原生 runner 上构建生产部署包。
+# 用法: Fork 仓库 → 推送本文件 → Actions 页运行 "Build ARM64 standalone"
+#       → 从 Artifacts 下载 openmaic-standalone-arm64.tar.gz
+#       → 在板子上解压后: HOSTNAME=0.0.0.0 PORT=3000 node server.js
+name: Build ARM64 standalone
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Package standalone bundle
+        run: |
+          cp -r public .next/standalone/public
+          mkdir -p .next/standalone/.next
+          cp -r .next/static .next/standalone/.next/static
+          tar -czf openmaic-standalone-arm64.tar.gz -C .next/standalone .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openmaic-standalone-arm64
+          path: openmaic-standalone-arm64.tar.gz
+          retention-days: 14
